@@ -29,6 +29,36 @@ def classify_image(model, image):
         print(f"Error occurred: {str(e)}")
         return None
 
-def predict(image, model):
-    preds = model.predict(image)
-    return decode_predictions(preds, top=3)[0]
+def main():
+    st.set_page_config(page_title="AI Image Classifier", page_icon="🖼️", layout="centered")
+
+    st.title("AI Image Classifier")
+    st.write("Upload an image and let the AI classify it!")
+
+    @st.cache_resource
+    def load_cached_model():
+        return load_model()
+    
+    model = load_cached_model()
+
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+
+    if uploaded_file is not None:
+        image = Image.open(uploaded_file)
+        if image.mode == "RGBA":
+            image = image.convert("RGB")
+        st.image(image, caption="Uploaded Image", use_column_width=True)
+
+        button = st.button("Classify")
+        if button:
+            with st.spinner('Classifying...'):
+                predictions = classify_image(model, image)
+                if predictions:
+                    st.subheader("Predictions:")
+                    for _, label, score in predictions:
+                        st.write(f"**{label}**: {score:.2%}")
+                else:
+                    st.write("Error occurred while classifying the image.")
+
+if __name__ == "__main__":
+    main()
